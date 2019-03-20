@@ -1,0 +1,65 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+   author: Mehmet Yilmaz
+  labels:
+    app: dtrack
+  name: dtrack
+spec:
+  externalTrafficPolicy: Cluster
+  ports:
+  - name: "8080"
+    port: 8080
+    targetPort: 8080
+  selector:
+    app: dtrack
+  type: NodePort
+status:
+  loadBalancer: {}
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  annotations:
+    author: Mehmet Yilmaz
+  creationTimestamp: null
+  labels:
+    app: dtrack
+  name: dtrack
+spec:
+  selector:
+    matchLabels:
+      app: dtrack
+  serviceName: dtrack
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: dtrack
+    spec:
+      securityContext:
+        fsGroup: 1000 
+      containers:
+      - image: owasp/dependency-track
+        name: dtrack
+        resources:
+          limits:
+            cpu: "2"
+          requests:
+            cpu: "0.5"
+        ports:
+        - containerPort: 8080
+          name: web
+        volumeMounts:
+          - name: dtrack-data
+            mountPath: /data
+  volumeClaimTemplates:
+    - metadata:
+        name: dtrack-data
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 50Gi
+     
